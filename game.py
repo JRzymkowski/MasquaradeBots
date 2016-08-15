@@ -45,12 +45,13 @@ players = []
 #players = [botA, botB, botC, botD, botE]
 cardSet = ['Judge', 'King', 'Queen', 'Cheat', 'Bishop', 'Spy', 'Thief']
 
-def MascaradeGame(playersSet, cardSet, gameLength):
+def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
     
     # returns endMode ('win', 'tie', 'timeout') and list winner (one element if win, multipe if tie, none if timeout)
     
     errorLog = []
     gameLog = []
+    # gameLog not yet coded
     
     # Initilize game
     # board collects all the information to be aviable to bots
@@ -64,21 +65,13 @@ def MascaradeGame(playersSet, cardSet, gameLength):
     
     numberOfPlayers = len(playersSet)
     board.numberOfPlayers = numberOfPlayers
-    players = random.sample(list(playersSet), numberOfPlayers)
     
-    
-    # General case, games of less than 6 players not fully supported
-    
-    activePlayers = players[:]
-    board.numberOfActivePlayers = len(activePlayers)
+    # players' turns are done accordingly to order of players
     
     ## If there are 4 or 5 players, 2 or 1 cards are placed on the table;
-    ## in this case, the table plays a role of a dummy player
-    ## who takes no actions and has no coins
        
     if (numberOfPlayers < 6):
-      players.append(players, 'dummy')
-      board.numberOfPlayers = 6
+      board.numberOfCards = 6
         
     # End of: general case, games of less than 6 players not fully supported
     
@@ -88,8 +81,8 @@ def MascaradeGame(playersSet, cardSet, gameLength):
     # Permutation will every time mean permutation of cards i.e. cards possesed by every player
     board.cardsInPlay = cardSet
     # shuffle card names and assume this permutation as starting sequence [0, 1, 2, 3...]
-    board.startingPermutationCards = random.sample(list(cardSet), numberOfPlayers)
-    permutation = list(range(numberOfPlayers) 
+    board.startingPermutationCards = random.sample(list(cardSet), numberOfCards)
+    permutation = list(range(numberOfCards) 
     
     numberOfTurnsForSwapOnly = 4 # according to the rules
     eventNumber = 0 
@@ -121,6 +114,9 @@ def MascaradeGame(playersSet, cardSet, gameLength):
     board.playersRevealedLastTurn = [] #numbers of players
     gameWinner = None
     
+    # additional rules, like setting card placement
+    if(additionalRule != None):
+        additionalRule(board)
     # game starts here
     while all(board.playerCoins > 0) and \
         all(board.playerCoins > 13) and \
@@ -129,9 +125,6 @@ def MascaradeGame(playersSet, cardSet, gameLength):
         
         eventNumber += 1
         currentPlayer = (currentPlayer + 1) % numberOfPlayers
-        if(players(currentPlayer) == 'dummy'):
-            currentPlayer = 0
-        # because we always put dummy players at the end
         
         actionMode = 'Regular'
         if turnNumber <= numberOfTurnsForSwapOnly:
@@ -317,11 +310,11 @@ def MascaradeGame(playersSet, cardSet, gameLength):
             if(winners == []):
                 winners = [i for i in list(range(numberOfPlayers)) if board.playerCoins[i] == max(board.playerCoins)]
             if(len(winners) > 1):
-                return 'tie', winners
+                return 'tie', winners, gameLog, errorLog
             else:
-                return 'win', winners
+                return 'win', winners, gameLog, errorLog
         else:
-            return 'win', [gameWinner]
+            return 'win', [gameWinner], gameLog, errorLog
     else:
-        return 'timeout', []
+        return 'timeout', [], gameLog, errorLog
     

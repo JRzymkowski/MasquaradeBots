@@ -108,7 +108,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
         cardPerformance = adHoc() # how has the card owner used the card
         response = adHoc() # used for special cards as Spy and Inquisitor
         
-    board.gameHistory = [] # list of events
+    board.events = [] # list of events
     eventNumber = -1 # global event number  
     currentPlayer = -1
     board.playersRevealedLastTurn = [] #numbers of players

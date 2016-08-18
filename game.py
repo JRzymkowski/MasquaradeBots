@@ -16,6 +16,8 @@ class adHoc:
 
 # Auxiliary functions
 
+# deprecate update
+```
 def update(destination, source):
     for att in source.__dict__:
         destination.__dict__[att] = copy.deepcopy(source.__dict__[att])
@@ -23,7 +25,7 @@ def update(destination, source):
     for att in diri:
         if att not in source.__dict__:
             destination.__dict__.pop(att, None)
-    
+```    
 
 def SwapCards(permutation, cardA, cardB):
     temp = permutation[cardA]
@@ -59,9 +61,8 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
     # boardCopy is a *DeepCopy* of board
     # boardCopy should be updated every time a bot is called
     board = adHoc()
-    boardCopy = adHoc()
     for player in playersSet:
-        player.board = boardCopy
+        player.board = copy.deepcopy(board)
     
     numberOfPlayers = len(playersSet)
     board.numberOfPlayers = numberOfPlayers

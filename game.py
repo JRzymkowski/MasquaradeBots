@@ -16,16 +16,18 @@ class adHoc:
 
 # Auxiliary functions
 
-# deprecate update
-```
-def update(destination, source):
+# deprecate updateOLD
+def updateOLD(destination, source):
     for att in source.__dict__:
         destination.__dict__[att] = copy.deepcopy(source.__dict__[att])
     diri = copy.deepcopy(destination.__dict__)
     for att in diri:
         if att not in source.__dict__:
             destination.__dict__.pop(att, None)
-```    
+            
+def updateBoard(players, board):
+    for player in players:
+        player.board = copy.deepcopy(board)
 
 def SwapCards(permutation, cardA, cardB):
     temp = permutation[cardA]
@@ -62,7 +64,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
     # boardCopy should be updated every time a bot is called
     board = adHoc()
     for player in playersSet:
-        player.board = copy.deepcopy(board)
+        player.board = adHoc()
     
     numberOfPlayers = len(playersSet)
     board.numberOfPlayers = numberOfPlayers
@@ -134,7 +136,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
             actionMode = 'Announcing banned'
         
         player = players[currentPlayer] # just making alias
-        update(boardCopy, board)
+        updateBoard(players, board)
         currentAction = player.Action(actionMode)
 
         
@@ -173,15 +175,13 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
             # future improvement: maybe create function returning "range modulo"?
             
             for i in range(currentPlayer+1, numberOfPlayers):
-                update(boardCopy, board)
-                if(players[i] != 'dummy'):
-                    if(players[i].Challenge()):
-                        board.challengers.append(i)
+                players[i].board = copy.deepcopy(board)
+                if(players[i].Challenge()):
+                    board.challengers.append(i)
             for i in range(0, currentPlayer):
-                update(boardCopy, board)
-                if(players[i] != 'dummy'):
-                    if(players[i].Challenge()):
-                        board.challengers.append(i)
+                players[i].board = copy.deepcopy(board)
+                if(players[i].Challenge()):
+                    board.challengers.append(i)
         
             thisEvent.challengers = board.challengers[:]
             
@@ -211,7 +211,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
             # CARD ACTIONS
             
             board.thisEvent = thisEvent
-            update(boardCopy, board)
+            updateBoard(players, board)
             if(performingPlayer != None):
                 if(currentAction.announcement == 'King'):
                     board.playerCoins[performingPlayer] += 3
@@ -265,9 +265,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                     player[performingPlayer].RecieveLookUp(performingPlayer, permutation[performingPlayer])
                     player[performingPlayer].RecieveLookUp(response.target, permutation[response.target])
                     thisEvent.response = response
-                    update(boardCopy, board)
                     swapTrue = player[performingPlayer].Respond('SpySwap')
-                    # mind you: player has acces to boardCopy, which is copy of board, which has acces to thisEvent
                     if(swapTrue):
                         SwapCards(permutation, performingPlayer, response.target)
                     responseForEvent = response
@@ -294,14 +292,15 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                 elif(currentAction.announcement  == 'Widow'):
                     board.playerCoins[performingPlayer] = max(10, board.playerCoins[performingPlayer])
                     
-                update(boardCopy, board) # just to make sure
                 
-                # now come penalties for wrong announcement
-                if(len(challengers) > 1):
-                    wrongdoers = [i for i in challengers if board.startingPermutationCards[permutation[i]] != currentAction.announcement]
-                    for wrongdoer in wrongdoers:
-                        board.playerCoins[wrongdoer] -= 1
-                        board.coinsInCourthouse += 1
+        # now come penalties for wrong announcement
+        if(len(challengers) > 1):
+            wrongdoers = [i for i in challengers if board.startingPermutationCards[permutation[i]] != currentAction.announcement]
+            for wrongdoer in wrongdoers:
+                board.playerCoins[wrongdoer] -= 1
+                board.coinsInCourthouse += 1
+                
+        events.append(thisEvent)
                 
     # check who won/tied
     

@@ -300,7 +300,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                 board.playerCoins[wrongdoer] -= 1
                 board.coinsInCourthouse += 1
                 
-        events.append(thisEvent)
+        board.events.append(thisEvent)
                 
     # check who won/tied
     

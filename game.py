@@ -243,7 +243,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                         board.playerCoins[performingPlayer] += 2 # let's assume richest player has at least 2 coins
                         board.playerCoins[richest[0]] -= 2
                     else:
-                        response = player[performingPlayer].Respond('Bishop', richest)
+                        response = player[performingPlayer].Respond(('Bishop', richest))
                         thisEvent.response = response
                         player[performingPlayer].lastWakeFor = 'Respond'
                         # now comes a check

@@ -123,7 +123,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
         
     for player in players:
         player.board = copy.deepcopy(board)
-        player.updateBeliefsOnGameStart()
+        player.UpdateBeliefsOnGameStart()
         
     # game starts here
     while all(board.playerCoins > 0) and \
@@ -184,7 +184,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
             
             for i in range(currentPlayer+1, numberOfPlayers):
                 players[i].board = copy.deepcopy(board)
-                players[i].upadateBeliefs('BeforeChallenging')
+                players[i].UpdateBeliefs('BeforeChallenging')
                 if(players[i].Challenge()):
                     board.challengers.append(i)
             for i in range(0, currentPlayer):
@@ -228,7 +228,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                                         # but this allows sending thisEvent's copy to bots
             updateBoard(players, board)
             for player in players:
-                player.updateBeliefs('AfterChallenging')
+                player.UpdateBeliefs('AfterChallenging')
             if(performingPlayer != None):
                 if(currentAction.announcement == 'King'):
                     board.playerCoins[performingPlayer] += 3
@@ -332,7 +332,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
         updateBoard(players, board)
             
         for player in players:
-            player.updateBeliefs('EndOfAction')
+            player.UpdateBeliefs('EndOfAction')
                 
                 
         eventNumber += 1

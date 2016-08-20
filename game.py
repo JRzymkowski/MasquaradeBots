@@ -112,22 +112,25 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
         response = adHoc() # used for special cards as Spy and Inquisitor
         
     events = [] # list of events
-    eventNumber = -1 # global event number  
-    currentPlayer = -1
+    eventNumber = 0 # global event number  
+    currentPlayer = 0
     board.playersRevealedLastTurn = [] #numbers of players
     gameWinner = None
     
     # additional rules, like setting card placement
     if(additionalRule != None):
         additionalRule(board)
+        
+    for player in players:
+        player.board = copy.deepcopy(board)
+        player.updateBeliefsOnGameStart()
+        
     # game starts here
     while all(board.playerCoins > 0) and \
         all(board.playerCoins > 13) and \
         eventNumber < gameLength and \
         gameWinner == None:
-        
-        eventNumber += 1
-        currentPlayer = (currentPlayer + 1) % numberOfPlayers
+
         
         actionMode = 'Regular'
         if turnNumber <= numberOfTurnsForSwapOnly:
@@ -174,11 +177,14 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
             board.challengers = [currentPlayer]
             cardIndex = board.startingPermutationCards.index(currentAction.announcement)
             
+            board.thisEvent = thisEvent
+            
             # Ask all players
             # future improvement: maybe create function returning "range modulo"?
             
             for i in range(currentPlayer+1, numberOfPlayers):
-                players[i].board = copy.deepcopy(board)  # possibly just update challengers and (earlier) thisEvent
+                players[i].board = copy.deepcopy(board)
+                players[i].upadateBeliefs('BeforeChallenging')
                 if(players[i].Challenge()):
                     board.challengers.append(i)
             for i in range(0, currentPlayer):
@@ -221,6 +227,8 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
             board.thisEvent = thisEvent # this is in fact making alias; board.thisEvent and thisEvent point to same data structure
                                         # but this allows sending thisEvent's copy to bots
             updateBoard(players, board)
+            for player in players:
+                player.updateBeliefs('AfterChallenging')
             if(performingPlayer != None):
                 if(currentAction.announcement == 'King'):
                     board.playerCoins[performingPlayer] += 3
@@ -297,7 +305,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                     # any "new" information is that it is he, who is inquisited, but it's trivial enough
                     # that's why I chose not to needlessly update hir board
                     inqusition = player[response.target].Respond('Inquisition')
-                    board.revealedCards.append((response.target, permutation[response.target]))
+                    thisEvent.cardsRevealed.append((response.target, permutation[response.target]))
                     if(inqusition.answer != board.startingPermutationCards[permutation[response.target]]):
                         board.playerCoins[performingPlayer] += 4
                         board.playerCoins[response.target] -= 4
@@ -309,8 +317,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                 elif(currentAction.announcement  == 'Widow'):
                     board.playerCoins[performingPlayer] = max(10, board.playerCoins[performingPlayer])
                     
-        thisEvent.cardsRevealed = cardsRevealed
-        cardsRevealedLastTurned = [x[0] for x in cardsRevealed]
+        board.playersRevealedLastTurn = [x[0] for x in cardsRevealed]
                 
         # now come penalties for wrong announcement
         if(len(challengers) > 1):
@@ -322,9 +329,21 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
         events.append(thisEvent)
         for player in players:
             player.events.append(copy.deepcopy(thisEvent))
+        updateBoard(players, board)
+            
+        for player in players:
+            player.updateBeliefs('EndOfAction')
                 
+                
+        eventNumber += 1
+        currentPlayer = (currentPlayer + 1) % numberOfPlayers
+        
+        gameLogEntry = adHoc()
+        gameLogEntry.board = board
+        gameLogEntry.event = thisEvent
+        gameLog.append(gameLogEntry)
     # check who won/tied
-    
+
     
     
     if(eventNumber < gameLength):

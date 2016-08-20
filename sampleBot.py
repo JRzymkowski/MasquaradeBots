@@ -49,7 +49,18 @@ class sampleBot:
         self.belief.swap(self.board.thisEvent.actingPlayer, self.board.thisEvent.eventAction.cardToSwap, 0.7)
         
     
-  def Action(self):
+  def Action(self, actionMode):
+    
+    if(actionMode == 'Swap only' or actionMode == 'Announcing banned'):
+      action = adHoc()
+      action.actionType = 'swap'
+      action.cardToSwap =  (self.myNumber + random.randint(1, self.board.numberOfCards-1)) % self.board.numberOfCards
+      decision = (random.random() < 0.7)
+      action.swapTrue = 1 if decision else 0
+      if(decision):
+        self.belief.swap(self.myNumber, action.cardToSwap, 1)
+      return action
+    
     if(random.random() < 0.1):
       action = adHoc()
       action.actionType = 'lookUp'
@@ -115,4 +126,19 @@ class sampleBot:
       if(decision):
         self.belief.swap(self.myNumber, self.choosenTargetOnSpy, 1)
       return response
-    elif(
+    elif(query == 'Inquisitor'):
+      beliefMatrix = self.belief.belief()
+      maxims = [max(beliefMatrix[:,i]) for i in list(range(self.numberOfCards))]
+      minimaxs = [index for index, maxim in enumerate(maxims) if maxim = min(maxims)]
+    
+      response = adHoc()
+      response.target = random.choice(minimaxs)
+      return response
+    elif(query == 'Inquisition'):
+      beliefMatrix = self.belief.belief()
+      myMostProbableCards = [i for i in list(range(self.board.numberOfCards)) if beliefMatrix[:,self.myNumber][i] == max(beliefMatrix[:,self.myNumber])]
+      announceCard = random.choice(myMostProbableCards)
+      
+      response = adHoc()
+      response.answer = self.board.startingPermutationCards.index(announceCard)
+      return response

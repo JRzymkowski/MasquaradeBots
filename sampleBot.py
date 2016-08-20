@@ -64,9 +64,9 @@ class sampleBot:
         self.belief.swap(self.myNumber, action.cardToSwap, 1)
       return action
     else:
-      beliefMatrix = belief.belief()
-      myMostProbableCards = [i for i in list(range(self.board.numberOfCards)) if beliefMatrix[:,3][i] == max(beliefMatrix[:,3])]
-      announceCard = myMostProbableCards[random.randint(0, len(myMostProbableCards)-1)] # works also if only one most probable
+      beliefMatrix = self.belief.belief()
+      myMostProbableCards = [i for i in list(range(self.board.numberOfCards)) if beliefMatrix[:,self.myNumber][i] == max(beliefMatrix[:,self.myNumber])]
+      announceCard = random.choice(myMostProbableCards) # works also if only one most probable
       action = adHoc()
       action.actionType = 'announce'
       action.announcement = self.board.startingPermutationCards.index(announceCard)
@@ -76,7 +76,7 @@ class sampleBot:
     if(type(query) == tuple):
       if(query[0] == 'Bishop'):
         response = adHoc()
-        response.target = query[1][random.randint(0, len(query[1])-1)]
+        response.target = random.choice(query[1])
         return response
     elif(query == 'Fool'):
       response = adHoc()
@@ -97,8 +97,22 @@ class sampleBot:
         response.swapWith = None
         return response
       else:
-        response.swapWith = richest[random.randint(0, len(richest)-1)]
+        response.swapWith = random.choice(richest)
         return response
     elif(query == 'Spy'):
-      
-        
+      beliefMatrix = self.belief.belief()
+      maxims = [max(beliefMatrix[:,i]) for i in list(range(self.numberOfCards))]
+      minimaxs = [index for index, maxim in enumerate(maxims) if maxim = min(maxims)]
+    
+      response = adHoc()
+      response.target = random.choice(minimaxs)
+      self.choosenTargetOnSpy = response.target
+      return response
+    elif(query == 'SpySwap'):
+      response = adHoc()
+      decision = (random.random() < 0.5)
+      response.swapTrue = 1 if decision else 0
+      if(decision):
+        self.belief.swap(self.myNumber, self.choosenTargetOnSpy, 1)
+      return response
+    elif(

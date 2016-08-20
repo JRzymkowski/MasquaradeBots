@@ -285,7 +285,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                     player[performingPlayer].RecieveLookUp(performingPlayer, permutation[performingPlayer])
                     player[performingPlayer].RecieveLookUp(response.target, permutation[response.target])
                     thisEvent.response = response
-                    if(player[performingPlayer].Respond('SpySwap')):
+                    if(player[performingPlayer].Respond('SpySwap').swapTrue):
                         SwapCards(permutation, performingPlayer, response.target)
                     responseForEvent = response
                     responseForEvent.swapTrue = -2

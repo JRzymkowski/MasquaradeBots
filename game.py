@@ -72,7 +72,8 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
     # players' turns are done accordingly to order of players
     
     ## If there are 4 or 5 players, 2 or 1 cards are placed on the table;
-       
+     
+    board.numberOfCards = numberOfPlayers
     if (numberOfPlayers < 6):
       board.numberOfCards = 6
         

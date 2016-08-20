@@ -17,13 +17,12 @@ class sampleBot:
   myNumber = -1
   lastWakeFor = ''
   
-  belief = superposition()
   
   def RecieveLookUp(self, player, card):
     self.belief.reveal(player, card)
     
   def UpdateBeliefsOnGameStart(self, gameMoment):
-    pass
+    self.belief = superposition(self.board.numberOfCards)
     
   def UpdateBeliefs(self, gameMoment):
     if(gameMoment == 'BeforeChallenging'):
@@ -58,7 +57,7 @@ class sampleBot:
     elif(random.random() < 0.5):
       action = adHoc()
       action.actionType = 'swap'
-      action.cardToSwap =  (self.myNumber + random.randint(1, self.board.numberOfPlayers-1)) % self.board.numberOfPlayers
+      action.cardToSwap =  (self.myNumber + random.randint(1, self.board.numberOfCards-1)) % self.board.numberOfCards
       decision = (random.random() < 0.7)
       action.swapTrue = 1 if decision else 0
       if(decision):
@@ -66,9 +65,40 @@ class sampleBot:
       return action
     else:
       beliefMatrix = belief.belief()
-      myMostProbableCards = [i for i in beliefMatrix[:,3] if beliefMatrix[:,3][i] == max(beliefMatrix[:,3])]
+      myMostProbableCards = [i for i in list(range(self.board.numberOfCards)) if beliefMatrix[:,3][i] == max(beliefMatrix[:,3])]
       announceCard = myMostProbableCards[random.randint(0, len(myMostProbableCards)-1)] # works also if only one most probable
       action = adHoc()
       action.actionType = 'announce'
       action.announcement = self.board.startingPermutationCards.index(announceCard)
-
+      return action
+  
+  def Respond(self, query):
+    if(type(query) == tuple):
+      if(query[0] == 'Bishop'):
+        response = adHoc()
+        response.target = query[1][random.randint(0, len(query[1])-1)]
+        return response
+    elif(query == 'Fool'):
+      response = adHoc()
+      response.cardA =  (self.myNumber + random.randint(1, self.board.numberOfCards-1)) % self.board.numberOfCards
+      available = list(range(self.board.numberOfCards))
+      available.remove[self.myNumber]
+      available.remove[action.cardA]
+      response.cardB = available[random.randint(0, len(available)-1)]
+      decision = (random.random() < 0.5)
+      response.swapTrue = 1 if decision else 0
+      if(decision):
+        self.belief.swap(response.cardA, response.cardB, 1)
+      return  response
+    elif(query == 'Witch'):
+      response = adHoc()
+      richest = [i for i in list(range(numberOfPlayers)) if self.board.playerCoins[i] == max(self.board.playerCoins)]
+      if self.myNumber in richest:
+        response.swapWith = None
+        return response
+      else:
+        response.swapWith = richest[random.randint(0, len(richest)-1)]
+        return response
+    elif(query == 'Spy'):
+      
+        

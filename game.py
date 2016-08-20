@@ -103,15 +103,15 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
     
     class event:
         eventNumber = None
-        playerActing = None
+        actingPlayer = None
         eventAction = action()
         challengers = []
         cardsRevealed = [] # list of tuples (player number, card number)
-        playerPerforming = None
+        performingPlayer = None
         cardPerformance = adHoc() # how has the card owner used the card
         response = adHoc() # used for special cards as Spy and Inquisitor
         
-    board.events = [] # list of events
+    events = [] # list of events
     eventNumber = -1 # global event number  
     currentPlayer = -1
     board.playersRevealedLastTurn = [] #numbers of players
@@ -135,9 +135,10 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
         if currentPlayer in board.playersRevealedLastTurn:
             actionMode = 'Announcing banned'
         
-        player = players[currentPlayer] # just making alias
         updateBoard(players, board)
-        currentAction = player.Action(actionMode)
+        currentAction = players[currentPlayer].Action(actionMode)
+        players[currentPlayer].lastWake = eventNumber
+        players[currentPlayer].lastWakeFor = 'Action'
 
         
         # Checking action type
@@ -151,11 +152,13 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
             
                 
         thisEvent = event()
+        board.eventNumber = eventNumber
         thisEvent.eventNumber = eventNumber
         thisEvent.actingPlayer = currentPlayer
         alteredAction = copy.deepcopy(currentAction)
         alteredAction.swapTrue = -2
         thisEvent.eventAction = alteredAction
+        
             
         # additional check for correctness of announcing and swapping will go here
         # ...
@@ -175,7 +178,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
             # future improvement: maybe create function returning "range modulo"?
             
             for i in range(currentPlayer+1, numberOfPlayers):
-                players[i].board = copy.deepcopy(board)
+                players[i].board = copy.deepcopy(board)  # possibly just update challengers and (earlier) thisEvent
                 if(players[i].Challenge()):
                     board.challengers.append(i)
             for i in range(0, currentPlayer):
@@ -184,13 +187,17 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                     board.challengers.append(i)
         
             thisEvent.challengers = board.challengers[:]
+            for index, player in enumerate(players):
+                player.lastWake = eventNumber
+                if(index != currentPlayer)
+                    player.lastWakeFor = 'Challenge'
             
             # check who performs the card's action... 
             # warning: nonsensical handling for paesant!
             
             if(board.challengers == [currentPlayer]):
                 performingPlayer = currentPlayer
-                board.performingPlayer = performingPlayer
+                board.peformingPlayer = performingPlayer
             else:
                 cardsRevealed = []
                 # all cards get revealed
@@ -205,12 +212,14 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                 thisEvent.performingPlayer = performingPlayer
                 board.performingPlayer = performingPlayer
                     
-                    
+            thisEvent.performingPlayer = performingPlayer        
             # future improvement: turn card actions into function to allow for easy implementation of new cards
             
             # CARD ACTIONS
             
-            board.thisEvent = thisEvent
+            thisEvent.cardsRevealed = cardsRevealed
+            board.thisEvent = thisEvent # this is in fact making alias; board.thisEvent and thisEvent point to same data structure
+                                        # but this allows sending thisEvent's copy to bots
             updateBoard(players, board)
             if(performingPlayer != None):
                 if(currentAction.announcement == 'King'):
@@ -227,6 +236,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                     else:
                         response = player[performingPlayer].Respond('Bishop', richest)
                         thisEvent.response = response
+                        player[performingPlayer].lastWakeFor = 'Respond'
                         # now comes a check
                         if response.target in richest:
                             board.playerCoins[performingPlayer] += 2
@@ -265,12 +275,13 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                     player[performingPlayer].RecieveLookUp(performingPlayer, permutation[performingPlayer])
                     player[performingPlayer].RecieveLookUp(response.target, permutation[response.target])
                     thisEvent.response = response
-                    swapTrue = player[performingPlayer].Respond('SpySwap')
-                    if(swapTrue):
+                    if(player[performingPlayer].Respond('SpySwap')):
                         SwapCards(permutation, performingPlayer, response.target)
                     responseForEvent = response
                     responseForEvent.swapTrue = -2
                     thisEvent.response = responseForEvent
+                    
+                    player[performingPlayer].lastWakeFor = 'Respond'
                 elif(currentAction.announcement  == 'Peasant'):
                     arePeasants = [i for i in challengers if board.startingPermutationCards[permutation[i]] == 'Peasant']
                     if(len(challengers) == 1):
@@ -282,6 +293,9 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                         board.playerCoins[arePeasants[1]] += 2
                 elif(currentAction.announcement  == 'Inquisitor'):
                     response = player[performingPlayer].Respond('Inquisitor')
+                    # inquisited player has up to date copy of board/thisEvent
+                    # any "new" information is that it is he, who is inquisited, but it's trivial enough
+                    # that's why I chose not to needlessly update hir board
                     inqusition = player[response.target].Respond('Inquisition')
                     board.revealedCards.append((response.target, permutation[response.target]))
                     if(inqusition.answer != board.startingPermutationCards[permutation[response.target]]):
@@ -289,9 +303,14 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                         board.playerCoins[response.target] -= 4
                     response.answer = inquisition.answer
                     thisEvent.response = response
+                    
+                    player[performingPlayer].lastWakeFor = 'Respond'
+                    player[response.target].lastWakeFor = 'Respond'
                 elif(currentAction.announcement  == 'Widow'):
                     board.playerCoins[performingPlayer] = max(10, board.playerCoins[performingPlayer])
                     
+        thisEvent.cardsRevealed = cardsRevealed
+        cardsRevealedLastTurned = [x[0] for x in cardsRevealed]
                 
         # now come penalties for wrong announcement
         if(len(challengers) > 1):
@@ -300,9 +319,13 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                 board.playerCoins[wrongdoer] -= 1
                 board.coinsInCourthouse += 1
                 
-        board.events.append(thisEvent)
+        events.append(thisEvent)
+        for player in players:
+            player.events.append(copy.deepcopy(thisEvent))
                 
     # check who won/tied
+    
+    
     
     if(eventNumber < gameLength):
         if(gameWinner == None):

@@ -256,7 +256,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                             board.playerCoins[richest[0]] -= 2
                 elif(currentAction.announcement  == 'Fool'):
                     response = player[performingPlayer].Respond('Fool')
-                    if(response.cardA != performingPlayer and response.cardB != performingPlayer):
+                    if(response.cardA != performingPlayer and response.cardB != performingPlayer and response.cardA != response.cardB):
                         if(response.swapTrue == 1):
                             SwapCards(permutation, response.cardA, response.cardB)
                         response.swapTrue = -2

@@ -121,9 +121,10 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
     if(additionalRule != None):
         additionalRule(board)
         
-    for player in players:
+    for index, player in enumerate(players):
         player.board = copy.deepcopy(board)
         player.UpdateBeliefsOnGameStart()
+        player.myNumber = index
         
     # game starts here
     while all(board.playerCoins > 0) and \

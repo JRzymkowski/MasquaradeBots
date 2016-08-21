@@ -1,0 +1,40 @@
+Necessary attributes:
+
+board - supplied by game enviornament; object with attributes:
+  playerCoins - list of coins of players
+  numberOfPlayers
+  numberOfCards - equals 6 if less than 6 players
+  coinsInCourthouse
+  cardsInPlay - names of cards used in game ('Bishop', 'Fool', etc.)
+  startingPermutationCards - list of names of cards by player, at the beggining
+  eventNumber - number of current event
+  playersRevealedLastTurn
+  
+  thisEvent - describes current event:
+    eventNumber
+    actingPlayer - player whose action it is
+    eventAction:
+      actionType - 'lookUp' or 'swap' or 'announce'
+      cardToSwap - number of card to swap
+      swapTrue - 1 for yes, 0 for no
+      announcement -if announcing, name of card announced
+    challengers - all players that claimed to have announced card (might be only actingPlayer)
+    cardsRevealed - cards revelead in this event (if #challengers > 1 or inquisition)
+    playerPerforming - player performing card action
+    response - response based on card action, card dependent; check game.py
+    
+myNumber - player's number
+events - list of all thisEvent's
+
+Necessary methods:
+
+RecieveLookUp(self, P, C) - reaction of bot to recieving information of player P owning card C (by card number)
+UpdateBeliefsOnGameStart(self) - bot actions at game start, after seeing board
+UpdateBeliefs(self, gameMoment) - bot updating its belief with info about game moment
+                                  'BeforeChallenging' - bot about to be asked if it challenges
+                                  'AfterChallenging' - all players had chance to challenge; some cards might be revealed
+                                  'EndOfAction' - end of action, last chance to use thisEvent
+Action(self, actionMode) - beggining of bot's action, bot returns action;
+                          actionMode might be 'Swap only' or 'Announcing banned' or 'Regular'
+Challenge(self) - bot might challenge the announcer, bot returns bool
+Respond(self, query) - bot returns response, card dependent

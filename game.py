@@ -10,6 +10,8 @@ import numpy as np
 import random
 import copy
 
+import sampleBot from sampleBot.py
+
 # Simple hack for creating ad hoc objects instead of dictionaries
 class adHoc:
     pass

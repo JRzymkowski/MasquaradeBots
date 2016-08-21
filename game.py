@@ -352,11 +352,6 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
             else:
                 gameLogEntry.event.swapTrue = 1
         gameLog.append(gameLogEntry)
-    
-        print(board.playerCoins, board.coinsInCourthouse, thisEvent.actingPlayer, thisEvent.eventAction.actionType,
-              (thisEvent.eventAction.announcement if thisEvent.eventAction.actionType == 'announce' else None),
-              (thisEvent.challengers if thisEvent.eventAction.actionType == 'announce' else None),
-              thisEvent.performingPlayer)
 
         
     # check who won/tied

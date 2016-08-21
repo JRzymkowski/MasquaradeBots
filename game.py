@@ -111,8 +111,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
         challengers = []
         cardsRevealed = [] # list of tuples (player number, card number)
         performingPlayer = None
-        cardPerformance = adHoc() # how has the card owner used the card
-        response = adHoc() # used for special cards as Spy and Inquisitor
+        response = adHoc() 
         
     events = [] # list of events
     eventNumber = 0 # global event number  

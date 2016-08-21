@@ -34,7 +34,7 @@ def SwapCards(permutation, cardA, cardB):
     permutation[cardA] = permutation[cardB]
     permutation[cardB] = temp
     
-def RandomSwap(currentPlayer, playersNumber)
+def RandomSwap(currentPlayer, playersNumber):
     A = action()
     A.actionType = 'swap'
     A.cardToSwap = (currentPlayer + random.randint(1, playersNumber-1)) % playersNumber
@@ -63,10 +63,10 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
     # boardCopy is a *DeepCopy* of board
     # boardCopy should be updated every time a bot is called
     board = adHoc()
-    for player in playersSet:
+    for player in players:
         player.board = adHoc()
     
-    numberOfPlayers = len(playersSet)
+    numberOfPlayers = len(players)
     board.numberOfPlayers = numberOfPlayers
     
     # players' turns are done accordingly to order of players
@@ -79,14 +79,14 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
         
     # End of: general case, games of less than 6 players not fully supported
     
-    board.playerCoins = [6] * board.numberOfActivePlayers
+    board.playerCoins = [6] * board.numberOfPlayers
     board.coinsInCourthouse = 0
     
     # Permutation will every time mean permutation of cards i.e. cards possesed by every player
     board.cardsInPlay = cardSet
     # shuffle card names and assume this permutation as starting sequence [0, 1, 2, 3...]
-    board.startingPermutationCards = random.sample(list(cardSet), numberOfCards)
-    permutation = list(range(numberOfCards) 
+    board.startingPermutationCards = random.sample(list(cardSet), board.numberOfCards)
+    permutation = list(range(board.numberOfCards))
     
     numberOfTurnsForSwapOnly = 4 # according to the rules
     eventNumber = 0 
@@ -122,20 +122,21 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
     if(additionalRule != None):
         additionalRule(board)
         
-    for index, player in enumerate(players):
-        player.board = copy.deepcopy(board)
-        player.UpdateBeliefsOnGameStart()
-        player.myNumber = index
+    for i in range(len(players)):
+        players[i].board = copy.deepcopy(board)
+        players[i].UpdateBeliefsOnGameStart()
+        players[i].myNumber = i
+        
         
     # game starts here
-    while all(board.playerCoins > 0) and \
-        all(board.playerCoins > 13) and \
+    while all([i > 0 for i in board.playerCoins]) and \
+        all([i < 13 for i in board.playerCoins]) and \
         eventNumber < gameLength and \
         gameWinner == None:
 
         
         actionMode = 'Regular'
-        if turnNumber <= numberOfTurnsForSwapOnly:
+        if eventNumber <= numberOfTurnsForSwapOnly:
             actionMode = 'Swap only'
         if currentPlayer in board.playersRevealedLastTurn:
             actionMode = 'Announcing banned'
@@ -144,7 +145,6 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
         currentAction = players[currentPlayer].Action(actionMode)
         players[currentPlayer].lastWake = eventNumber
         players[currentPlayer].lastWakeFor = 'Action'
-
         
         # Checking action type
         if(actionMode == 'Swap only' and currentAction.actionType != 'swap'):
@@ -170,13 +170,13 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
         
         # Perform action
         if(currentAction.actionType == 'lookUp'):
-            player.RecieveLookUp(currentPlayer, permutation[currentPlayer])
+            players[currentPlayer].RecieveLookUp(currentPlayer, permutation[currentPlayer])
         if(currentAction.actionType == 'swap'):
             if(currentAction.swapTrue == True):
                 SwapCards(permutation, currentPlayer, currentAction.cardToSwap)
         if(currentAction.actionType == 'announce'):
             # Here come the big guns
-            board.challengers = [currentPlayer]
+            thisEvent.challengers = [currentPlayer]
             cardIndex = board.startingPermutationCards.index(currentAction.announcement)
             
             board.thisEvent = thisEvent
@@ -188,34 +188,34 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                 players[i].board = copy.deepcopy(board)
                 players[i].UpdateBeliefs('BeforeChallenging')
                 if(players[i].Challenge()):
-                    board.challengers.append(i)
+                    thisEvent.challengers.append(i)
             for i in range(0, currentPlayer):
                 players[i].board = copy.deepcopy(board)
                 if(players[i].Challenge()):
-                    board.challengers.append(i)
+                    thisEvent.challengers.append(i)
         
-            thisEvent.challengers = board.challengers[:]
             for index, player in enumerate(players):
                 player.lastWake = eventNumber
-                if(index != currentPlayer)
+                if(index != currentPlayer):
                     player.lastWakeFor = 'Challenge'
             
             # check who performs the card's action... 
             # warning: nonsensical handling for paesant!
+            thisEvent.cardsRevealed = []
             
-            if(board.challengers == [currentPlayer]):
+            if(thisEvent.challengers == [currentPlayer]):
                 performingPlayer = currentPlayer
                 board.peformingPlayer = performingPlayer
             else:
                 cardsRevealed = []
                 # all cards get revealed
-                for player in challengers:
+                for player in thisEvent.challengers:
                     cardsRevealed.append((player, permutation[player]))
                 thisEvent.cardsRevealed = cardsRevealed[:]
                 board.cardsRevealed = cardsRevealed[:]
                 
                 performingPlayer = None
-                if(cardIndex in [permutation[x] for x in challengers]):
+                if(cardIndex in [permutation[x] for x in thisEvent.challengers]):
                     performingPlayer = permutation.index(cardIndex)
                 thisEvent.performingPlayer = performingPlayer
                 board.performingPlayer = performingPlayer
@@ -225,7 +225,6 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
             
             # CARD ACTIONS
             
-            thisEvent.cardsRevealed = cardsRevealed
             board.thisEvent = thisEvent # this is in fact making alias; board.thisEvent and thisEvent point to same data structure
                                         # but this allows sending thisEvent's copy to bots
             updateBoard(players, board)
@@ -238,15 +237,16 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                     board.playerCoins[performingPlayer] += 2
                 elif(currentAction.announcement  == 'Judge'):
                     board.playerCoins[performingPlayer] += board.coinsInCourthouse
+                    board.coinsInCourthouse = 0
                 elif(currentAction.announcement  == 'Bishop'):
                     richest = [i for i in list(range(numberOfPlayers)) if board.playerCoins[i] == max(board.playerCoins)]
                     if(len(richest) == 1):
                         board.playerCoins[performingPlayer] += 2 # let's assume richest player has at least 2 coins
                         board.playerCoins[richest[0]] -= 2
                     else:
-                        response = player[performingPlayer].Respond(('Bishop', richest))
+                        response = players[performingPlayer].Respond(('Bishop', richest))
                         thisEvent.response = response
-                        player[performingPlayer].lastWakeFor = 'Respond'
+                        players[performingPlayer].lastWakeFor = 'Respond'
                         # now comes a check
                         if response.target in richest:
                             board.playerCoins[performingPlayer] += 2
@@ -256,7 +256,7 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                             board.playerCoins[performingPlayer] += 2
                             board.playerCoins[richest[0]] -= 2
                 elif(currentAction.announcement  == 'Fool'):
-                    response = player[performingPlayer].Respond('Fool')
+                    response = players[performingPlayer].Respond('Fool')
                     if(response.cardA != performingPlayer and response.cardB != performingPlayer and response.cardA != response.cardB):
                         if(response.swapTrue == 1):
                             SwapCards(permutation, response.cardA, response.cardB)
@@ -274,27 +274,27 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                     if(board.playerCoins[performingPlayer] >= 10):
                         gameWinner = performingPlayer
                 elif(currentAction.announcement  == 'Witch'):
-                    response = player[performingPlayer].Respond('Witch')
+                    response = players[performingPlayer].Respond('Witch')
                     thisEvent.response = response
                     if(response.swapWith != None):
                         temp = board.playerCoins[performingPlayer]
                         board.playerCoins[performingPlayer] = board.playerCoins[response.swapWith]
                         board.playerCoins[response.swapWith] = temp
                 elif(currentAction.announcement  == 'Spy'):
-                    response = player[performingPlayer].Respond('Spy')
-                    player[performingPlayer].RecieveLookUp(performingPlayer, permutation[performingPlayer])
-                    player[performingPlayer].RecieveLookUp(response.target, permutation[response.target])
+                    response = players[performingPlayer].Respond('Spy')
+                    players[performingPlayer].RecieveLookUp(performingPlayer, permutation[performingPlayer])
+                    players[performingPlayer].RecieveLookUp(response.target, permutation[response.target])
                     thisEvent.response = response
-                    if(player[performingPlayer].Respond('SpySwap').swapTrue):
+                    if(players[performingPlayer].Respond('SpySwap').swapTrue):
                         SwapCards(permutation, performingPlayer, response.target)
                     responseForEvent = response
                     responseForEvent.swapTrue = -2
                     thisEvent.response = responseForEvent
                     
-                    player[performingPlayer].lastWakeFor = 'Respond'
+                    players[performingPlayer].lastWakeFor = 'Respond'
                 elif(currentAction.announcement  == 'Peasant'):
-                    arePeasants = [i for i in challengers if board.startingPermutationCards[permutation[i]] == 'Peasant']
-                    if(len(challengers) == 1):
+                    arePeasants = [i for i in thisEvent.challengers if board.startingPermutationCards[permutation[i]] == 'Peasant']
+                    if(len(thisEvent.challengers) == 1):
                         board.playerCoins[performingPlayer] += 1
                     elif(len(arePeasants) == 1):
                         board.playerCoins[arePeasants[0]] += 1
@@ -302,37 +302,38 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
                         board.playerCoins[arePeasants[0]] += 2
                         board.playerCoins[arePeasants[1]] += 2
                 elif(currentAction.announcement  == 'Inquisitor'):
-                    response = player[performingPlayer].Respond('Inquisitor')
+                    response = players[performingPlayer].Respond('Inquisitor')
                     # inquisited player has up to date copy of board/thisEvent
                     # any "new" information is that it is he, who is inquisited, but it's trivial enough
                     # that's why I chose not to needlessly update hir board
-                    inqusition = player[response.target].Respond('Inquisition')
+                    inquisition = players[response.target].Respond('Inquisition')
                     thisEvent.cardsRevealed.append((response.target, permutation[response.target]))
-                    if(inqusition.answer != board.startingPermutationCards[permutation[response.target]]):
+                    if(inquisition.answer != board.startingPermutationCards[permutation[response.target]]):
                         board.playerCoins[performingPlayer] += 4
                         board.playerCoins[response.target] -= 4
                     response.answer = inquisition.answer
                     thisEvent.response = response
                     
-                    player[performingPlayer].lastWakeFor = 'Respond'
-                    player[response.target].lastWakeFor = 'Respond'
+                    players[performingPlayer].lastWakeFor = 'Respond'
+                    players[response.target].lastWakeFor = 'Respond'
                 elif(currentAction.announcement  == 'Widow'):
                     board.playerCoins[performingPlayer] = max(10, board.playerCoins[performingPlayer])
                     
-        board.playersRevealedLastTurn = [x[0] for x in cardsRevealed]
+        board.playersRevealedLastTurn = [x[0] for x in thisEvent.cardsRevealed]
                 
         # now come penalties for wrong announcement
-        if(len(challengers) > 1):
-            wrongdoers = [i for i in challengers if board.startingPermutationCards[permutation[i]] != currentAction.announcement]
+        if(len(thisEvent.challengers) > 1):
+            wrongdoers = [i for i in thisEvent.challengers if board.startingPermutationCards[permutation[i]] != currentAction.announcement]
             for wrongdoer in wrongdoers:
                 board.playerCoins[wrongdoer] -= 1
                 board.coinsInCourthouse += 1
                 
         events.append(thisEvent)
+        board.thisEvent = thisEvent
         for player in players:
             player.events.append(copy.deepcopy(thisEvent))
         updateBoard(players, board)
-            
+
         for player in players:
             player.UpdateBeliefs('EndOfAction')
                 
@@ -343,14 +344,26 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
         gameLogEntry = adHoc()
         gameLogEntry.board = board
         gameLogEntry.event = thisEvent
+        if(thisEvent.eventAction.actionType == 'swap'):
+            if(currentAction.swapTrue == 0):
+                gameLogEntry.event.swapTrue = 0
+            else:
+                gameLogEntry.event.swapTrue = 1
         gameLog.append(gameLogEntry)
+    
+        print(board.playerCoins, board.coinsInCourthouse, thisEvent.actingPlayer, thisEvent.eventAction.actionType,
+              (thisEvent.eventAction.announcement if thisEvent.eventAction.actionType == 'announce' else None),
+              (thisEvent.challengers if thisEvent.eventAction.actionType == 'announce' else None),
+              thisEvent.performingPlayer)
+
+        
     # check who won/tied
 
     
     
     if(eventNumber < gameLength):
         if(gameWinner == None):
-            winners = [i for i in players if board.playerCoins[i] >= 13]
+            winners = [i for i in list(range(numberOfPlayers)) if board.playerCoins[i] >= 13]
             if(winners == []):
                 winners = [i for i in list(range(numberOfPlayers)) if board.playerCoins[i] == max(board.playerCoins)]
             if(len(winners) > 1):
@@ -361,4 +374,3 @@ def MascaradeGame(players, cardSet, gameLength, additionalRule = None):
             return 'win', [gameWinner], gameLog, errorLog
     else:
         return 'timeout', [], gameLog, errorLog
-    

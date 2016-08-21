@@ -13,9 +13,7 @@ class sampleBot:
   events = []
   fullySupportedCardSet = ['Judge', 'King', 'Queen', 'Cheat', 'Bishop', 'Spy', 'Thief']
   supportedCardSet = ['Judge', 'King', 'Queen', 'Cheat', 'Bishop', 'Spy', 'Thief', 'Peasant', 'Witch', 'Widow', 'Inquisitor']
-  lastWake = -1
   myNumber = -1
-  lastWakeFor = ''
   
   
   def RecieveLookUp(self, player, card):

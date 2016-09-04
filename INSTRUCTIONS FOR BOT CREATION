@@ -5,10 +5,10 @@ board - supplied by game enviornament; object with attributes:
   numberOfPlayers
   numberOfCards - equals 6 if less than 6 players
   coinsInCourthouse
-  cardsInPlay - names of cards used in game ('Bishop', 'Fool', etc.)
-  startingPermutationCards - list of names of cards by player, at the beggining
+  cardsInPlay - names of cards used in game ['Bishop', 'Fool', etc.]
+  startingPermutationCards - list of names of cards by player, at the beggining, eg. ['Judge', 'King', 'Fool',...] 
   eventNumber - number of current event
-  playersRevealedLastTurn
+  playersRevealedLastTurn - players whose cards were revealed last turn
   
   thisEvent - describes current event:
     eventNumber

@@ -1,10 +1,10 @@
 # introduces class superposition, which represents beliefs about card placement in form of superposition of possible card positions
 # class superpositionOld is old version of superposition, I left it as it's code is clearer. 
 # however it's not optimized and might pose problem for large players numbers
-# use of superpositionOpt is strongly suggested
+# use of superposition is strongly suggested
 
 # on initialization, superposition takes one argument - players number
-# methods of superpositionOpt:
+# methods of superposition:
 #   setPlacement(permutation) - permutation is list representing cards of players; sets cards placement
 #   reset(); resets the superposition, same as setPlacement([0,1,2,3,...])
 #   swap(cards, probability) - cards is a tuple of player numbers, whose cards are being swapped, 

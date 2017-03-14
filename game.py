@@ -6,6 +6,8 @@
 # Rules encoded and quoted in this program are referenced
 # for educational purposes only.
 
+#supported cards: ['Judge', 'King', 'Queen', 'Cheat', 'Bishop', 'Spy', 'Thief', 'Peasant', 'Witch', 'Widow', 'Inquisitor']
+
 import numpy as np
 import random
 import copy
